@@ -1,0 +1,36 @@
+module produceConsume:
+
+% Version 3 – lockstep version
+
+% External declarations
+
+
+% Interface
+input On: boolean;
+input Off: boolean;
+input Resume: boolean;
+input Set: boolean;
+input QuickDecel: boolean;
+input QuickAccel: boolean;
+input Accel: integer;
+input Brake: integer;
+input Speed: integer;
+
+output Curise: float;
+output ThrottleCmd: integer;
+output CuriseState: string
+
+
+loop
+
+    	if ?On =true then
+        	emit CuriseState("ON");
+        else
+        	emit CuriseState("OFF");
+        end if;
+
+end loop
+
+end module
+
+
