@@ -1,13 +1,38 @@
-
 module cruiseControl :
 
-    input  On, Off, Resume, Set, QuickDecel, QuickAccel : pure;
-    input  Accel, Brake, Speed         : float; 
-    output CruiseSpeed, ThrottleCmd     : float;
-    output CruiseState                  : { OFF, ON, STDBY, DISABLE }; 
+input  On, Off, Resume, Set, QuickDecel, QuickAccel;
+input  BrakeBool, AccelBool, InSpLimit;
+input  Accel : float, Brake : float, Speed : float; 
+output CruiseSpeed : float, ThrottleCmd : float;
+output CruiseState : integer;  
 
+loop
+    emit CruiseState(0);
+    abort
+        await On;
+        loop
+            abort
+                loop
+                    abort
+                        loop
+                            present InSpLimit then
+                                emit CruiseState(1);
+                            else
+                                emit CruiseState(2);
+                            end present;
+                            pause;
+                        end loop
+                    when AccelBool;
+                    emit CruiseState(2);
+                    pause;
+                end loop
+            when BrakeBool;
+            emit CruiseState(3);
+            await Resume;
+        end loop
+    when Off;
+    emit CruiseState(0);
+    pause;
+end loop
 
-
-
-
-    
+end module
