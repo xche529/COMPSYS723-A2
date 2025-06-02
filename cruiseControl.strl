@@ -1,0 +1,13 @@
+
+module cruiseControl :
+
+    input  On, Off, Resume, Set, QuickDecel, QuickAccel : pure;
+    input  Accel, Brake, Speed         : float; 
+    output CruiseSpeed, ThrottleCmd     : float;
+    output CruiseState                  : { OFF, ON, STDBY, DISABLE }; 
+
+
+
+
+
+    
