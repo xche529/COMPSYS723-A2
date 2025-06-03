@@ -1,17 +1,21 @@
 module cruiseControl :
 
 input  On, Off, Resume, Set, QuickDecel, QuickAccel;
-input  InSpLimit;
 input  Accel : float, Brake : float, Speed : float; 
 output CruiseSpeed : float, ThrottleCmd : float;
 output CruiseState : integer;
 output Brake1: integer;
 output Accel1: integer;
+output InSpLimit: integer;
 function checkZero(float): integer;
 function updateCruiseSpeed(integer,float): float;
+function checkSpeedValid(float): integer;
 
-signal isBrake, isAccel, speedUpdate  in
+signal isBrake, isAccel, inSpeedLimit, speedUpdate in
 signal currentCruiseSpeed : float in
+
+%CruiseState control
+[
 loop
     emit CruiseState(1);
     abort
@@ -21,7 +25,7 @@ loop
                 loop
                     abort
                         loop
-                            present InSpLimit then
+                            present inSpeedLimit then
                                 emit CruiseState(2);
                             else
                                 emit CruiseState(3);
@@ -37,15 +41,13 @@ loop
             await Resume;
         end loop
     when Off;
-    emit CruiseState(1);
-    pause;
-
 end loop
-
+]
 
 ||
 
-
+%Check brake and accel
+[
 loop
     pause;
 
@@ -68,12 +70,16 @@ loop
 
     end var
 end loop
+]
 
 ||
 
+%Handle cruise speed change
+[
 await On;
 emit currentCruiseSpeed(updateCruiseSpeed(0,?Speed));
 emit speedUpdate;
+%Bug to fix
 pause;
 loop
     abort
@@ -89,16 +95,32 @@ loop
             when QuickDecel;
             emit currentCruiseSpeed(updateCruiseSpeed(2,pre(?currentCruiseSpeed)));
             emit speedUpdate;
-            pause;
         end loop
     when On;
     emit currentCruiseSpeed(updateCruiseSpeed(0,?Speed));
     emit speedUpdate;
-    pause;
 end loop
+]
 
 ||
 
+%Check if speed is in valid range
+[
+loop
+    var V: integer in
+        await Speed;
+            V:=  checkSpeedValid(?Speed);
+            if V = 1 then
+                emit inSpeedLimit;
+                emit InSpLimit(1);
+            else 
+                emit InSpLimit(0);
+            end if;
+    end var
+end loop
+]
+
+||
 
 loop
     await speedUpdate;

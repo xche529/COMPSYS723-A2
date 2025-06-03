@@ -15,6 +15,14 @@ int checkZero(float data){
     return 1;
 }
 
+int checkSpeedValid(float data){
+	if (data<30 || data>150 ){
+		return 0;
+	}else{
+		return 1;
+	}
+}
+
 float updateCruiseSpeed(int data, float speed){
     if(data == 1){
         speed += SpeedInc;
