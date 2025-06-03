@@ -1,0 +1,36 @@
+On ;
+% Outputs: CruiseState("0")
+%
+On Off ;
+% Outputs: CruiseState("0")
+%
+On ;
+% Outputs: CruiseState("0")
+%
+;
+% Outputs:
+%
+On ;
+% Outputs: CruiseState("2")
+%
+On InSpLimit ;
+% Outputs: CruiseState("1")
+%
+InSpLimit ;
+% Outputs: CruiseState("1")
+%
+BrakeBool ;
+% Outputs: CruiseState("3")
+%
+Resume ;
+% Outputs: CruiseState("2")
+%
+InSpLimit ;
+% Outputs: CruiseState("1")
+%
+AccelBool ;
+% Outputs: CruiseState("2")
+%
+InSpLimit ;
+% Outputs: CruiseState("1")
+%
