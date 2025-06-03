@@ -1,36 +1,54 @@
-module produceConsume:
+module cruiseControl :
 
-% Version 3 – lockstep version
+procedure send() (integer);
+function outCount(): integer;
+function check_speed(float): integer;
+function check(float): integer;
 
-% External declarations
+input  On, Off, Resume, Set, QuickDecel, QuickAccel;
+input  Accel : float, Brake : float, Speed : float; 
+output CruiseSpeed : float, ThrottleCmd : float;
+output CruiseState : integer;  
+output message: integer;
 
-
-% Interface
-input On: boolean;
-input Off: boolean;
-input Resume: boolean;
-input Set: boolean;
-input QuickDecel: boolean;
-input QuickAccel: boolean;
-input Accel: integer;
-input Brake: integer;
-input Speed: integer;
-
-output Curise: float;
-output ThrottleCmd: integer;
-output CuriseState: string
-
-
+[
 loop
-
-    	if ?On =true then
-        	emit CuriseState("ON");
-        else
-        	emit CuriseState("OFF");
-        end if;
-
+    emit CruiseState(1);
+    abort
+        await On;
+        loop
+        var speed, brake, accel: integer in
+        speed := check_speed(?Speed);  
+        brake:= check(?Brake);
+        accel:= check(?Accel);
+            if brake =0 then 
+                    if accel =0 then                                                  
+                            	if speed =1 then                      
+                               	emit CruiseState(2);     
+                               	emit message(speed);                         
+                            	else
+                                	emit CruiseState(3);
+                                	emit message(speed);
+                               end if;
+                            pause;
+                         
+                    else
+                    	emit CruiseState(3);
+                    	pause;
+                    end if;
+            else
+            	emit CruiseState(4);
+            	await Resume;
+            end if;            
+            end var
+        end loop
+    when Off;
+    emit CruiseState(1);
+    pause;
 end loop
+]
+
+
 
 end module
-
 

@@ -5,3 +5,5 @@ void recv1(char** data);
 void adding(unsigned int data);
 int remov();
 int outCount();
+int check_speed(float data);
+int check(float data);

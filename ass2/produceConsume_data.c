@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include "produceConsume.h"
+#include <stdbool.h>
 #define SIZE 5
 
 int cq[SIZE];
@@ -14,6 +15,22 @@ int outCount(){
 
 void send(int data){
 	adding(data);
+}
+
+int check_speed(float data){
+	if (data<30 || data>150 ){
+		return 0;
+	}else{
+		return 1;
+	}
+}
+
+int check(float data){
+	if (data == 0 ){
+		return 0;
+	}else{
+		return 1;
+	}
 }
 
 void adding(unsigned int data){
