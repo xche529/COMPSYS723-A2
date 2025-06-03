@@ -1,13 +1,19 @@
 module cruiseControl :
 
 input  On, Off, Resume, Set, QuickDecel, QuickAccel;
-input  BrakeBool, AccelBool, InSpLimit;
+input  InSpLimit;
 input  Accel : float, Brake : float, Speed : float; 
 output CruiseSpeed : float, ThrottleCmd : float;
-output CruiseState : integer;  
+output CruiseState : integer;
+output Brake1: integer;
+output Accel1: integer;
+function checkZero(float): integer;
+function updateCruiseSpeed(integer,float): float;
 
+signal isBrake, isAccel, speedUpdate  in
+signal currentCruiseSpeed : float in
 loop
-    emit CruiseState(0);
+    emit CruiseState(1);
     abort
         await On;
         loop
@@ -16,23 +22,92 @@ loop
                     abort
                         loop
                             present InSpLimit then
-                                emit CruiseState(1);
-                            else
                                 emit CruiseState(2);
+                            else
+                                emit CruiseState(3);
                             end present;
                             pause;
                         end loop
-                    when AccelBool;
-                    emit CruiseState(2);
+                    when isAccel;
+                    emit CruiseState(3);
                     pause;
                 end loop
-            when BrakeBool;
-            emit CruiseState(3);
+            when isBrake;
+            emit CruiseState(4);
             await Resume;
         end loop
     when Off;
-    emit CruiseState(0);
+    emit CruiseState(1);
+    pause;
+
+end loop
+
+
+||
+
+
+loop
+    pause;
+
+    var B: integer, A: integer in
+        B:= checkZero(?Brake);
+        A:= checkZero(?Accel);
+        if B = 0 then
+            emit isBrake;
+            emit Brake1(1);
+        else
+            emit Brake1(0);
+        end if;
+
+        if A = 0 then
+            emit isAccel;
+            emit Accel1(1);
+        else
+            emit Accel1(0);
+        end if;
+
+    end var
+end loop
+
+||
+
+await On;
+emit currentCruiseSpeed(updateCruiseSpeed(0,?Speed));
+emit speedUpdate;
+pause;
+loop
+    abort
+        loop
+            abort
+                loop
+                    present QuickAccel then
+                        emit currentCruiseSpeed(updateCruiseSpeed(1,pre(?currentCruiseSpeed)));
+                        emit speedUpdate;
+                    end present;
+                    pause;
+                end loop
+            when QuickDecel;
+            emit currentCruiseSpeed(updateCruiseSpeed(2,pre(?currentCruiseSpeed)));
+            emit speedUpdate;
+            pause;
+        end loop
+    when On;
+    emit currentCruiseSpeed(updateCruiseSpeed(0,?Speed));
+    emit speedUpdate;
     pause;
 end loop
 
+||
+
+
+loop
+    await speedUpdate;
+        emit CruiseSpeed(?currentCruiseSpeed);
+end loop
+
+
+
+end signal
+end signal
 end module
+
