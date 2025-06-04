@@ -42,6 +42,7 @@ loop
         end loop
     when Off;
     emit CruiseState(1);
+    emit On_state(0);
     pause;
 end loop
 ]
@@ -50,8 +51,13 @@ end loop
 
 [
 loop
-	emit ThrottleCmd(regulateThrottle(?On_state, ?cruiseSpeed, ?Speed));
-	pause;
+    present On_state then
+        emit ThrottleCmd(regulateThrottle(?On_state, ?cruiseSpeed, ?Speed));
+	    pause;
+    else
+        pause;
+    end present;
+	
 end loop
 ] 
 end signal
