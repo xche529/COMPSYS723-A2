@@ -1,19 +1,18 @@
 module cruiseControl :
-
-procedure send() (integer);
-function outCount(): integer;
 function check_speed(float): integer;
 function check(float): integer;
+function regulateThrottle(integer, float, float): float;
 
 input  On, Off, Resume, Set, QuickDecel, QuickAccel;
-input  Accel : float, Brake : float, Speed : float; 
-output CruiseSpeed : float, ThrottleCmd : float;
+input  Accel : float, Brake : float, Speed : float, cruiseSpeed:float; 
+output ThrottleCmd : float;
 output CruiseState : integer;  
-output message: integer;
 
+signal On_state: integer in
 [
 loop
     emit CruiseState(1);
+    emit On_state(0);
     abort
         await On;
         loop
@@ -24,11 +23,9 @@ loop
             if brake =0 then 
                     if accel =0 then                                                  
                             	if speed =1 then                      
-                               	emit CruiseState(2);     
-                               	emit message(speed);                         
+                               	emit CruiseState(2);                          
                             	else
                                 	emit CruiseState(3);
-                                	emit message(speed);
                                end if;
                             pause;
                          
@@ -36,6 +33,7 @@ loop
                     	emit CruiseState(3);
                     	pause;
                     end if;
+            emit On_state(1);
             else
             	emit CruiseState(4);
             	await Resume;
@@ -48,7 +46,14 @@ loop
 end loop
 ]
 
+||
 
-
+[
+loop
+	emit ThrottleCmd(regulateThrottle(?On_state, ?cruiseSpeed, ?Speed));
+	pause;
+end loop
+] 
+end signal
 end module
 
