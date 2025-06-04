@@ -11,13 +11,13 @@ function checkZero(float): integer;
 function updateCruiseSpeed(integer,float): float;
 function checkSpeedValid(float): integer;
 
-signal isBrake, isAccel, inSpeedLimit, speedUpdate in
-signal currentCruiseSpeed : float in
+signal isBrake, isAccel, inSpeedLimit,CruiseStateSignal : integer, speedUpdate, CruiseStateUpdate, currentCruiseSpeed : float in
 
 %CruiseState control
 [
 loop
-    emit CruiseState(1);
+    emit CruiseStateSignal(1);
+    emit CruiseStateUpdate;
     abort
         await On;
         loop
@@ -26,18 +26,21 @@ loop
                     abort
                         loop
                             present inSpeedLimit then
-                                emit CruiseState(2);
+                                emit CruiseStateSignal(2);
                             else
-                                emit CruiseState(3);
+                                emit CruiseStateSignal(3);
                             end present;
+                            emit CruiseStateUpdate;
                             pause;
                         end loop
                     when isAccel;
-                    emit CruiseState(3);
+                    emit CruiseStateSignal(3);
+                    emit CruiseStateUpdate;
                     pause;
                 end loop
             when isBrake;
-            emit CruiseState(4);
+            emit CruiseStateSignal(4);
+            emit CruiseStateUpdate;
             await Resume;
         end loop
     when Off;
@@ -76,29 +79,35 @@ end loop
 
 %Handle cruise speed change
 [
-await On;
-emit currentCruiseSpeed(updateCruiseSpeed(0,?Speed));
-emit speedUpdate;
-%Bug to fix
-pause;
 loop
     abort
+        await On;
+        emit currentCruiseSpeed(updateCruiseSpeed(0,?Speed));
+        emit speedUpdate;
+        %Bug to fix below (pause)
+        pause;
         loop
             abort
-                loop
-                    present QuickAccel then
-                        emit currentCruiseSpeed(updateCruiseSpeed(1,pre(?currentCruiseSpeed)));
+                abort
+                    loop
+                        abort
+                            loop
+                                present QuickAccel then
+                                    emit currentCruiseSpeed(updateCruiseSpeed(1,pre(?currentCruiseSpeed)));
+                                    emit speedUpdate;
+                                end present;
+                                pause;
+                            end loop
+                        when QuickDecel;
+                        emit currentCruiseSpeed(updateCruiseSpeed(2,pre(?currentCruiseSpeed)));
                         emit speedUpdate;
-                    end present;
-                    pause;
-                end loop
-            when QuickDecel;
-            emit currentCruiseSpeed(updateCruiseSpeed(2,pre(?currentCruiseSpeed)));
+                    end loop
+                when On;
+            when Set;
+            emit currentCruiseSpeed(updateCruiseSpeed(0,?Speed));
             emit speedUpdate;
         end loop
-    when On;
-    emit currentCruiseSpeed(updateCruiseSpeed(0,?Speed));
-    emit speedUpdate;
+    when Off;
 end loop
 ]
 
@@ -121,15 +130,38 @@ end loop
 ]
 
 ||
-
+[
 loop
-    await speedUpdate;
+    present speedUpdate then
         emit CruiseSpeed(?currentCruiseSpeed);
+        pause;
+    else
+        pause;
+    end present;
 end loop
+]
+||
+[
+loop
+    present CruiseStateUpdate then
+        emit CruiseState(?CruiseStateSignal);
+        pause;
+    else
+        pause;
+    end present;
+end loop
+]
+
+||
+
+[
+    
 
 
 
-end signal
+
+]
+
 end signal
 end module
 
