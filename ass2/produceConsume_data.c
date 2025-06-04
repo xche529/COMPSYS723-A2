@@ -2,12 +2,10 @@
 #include<stdlib.h>
 #include "produceConsume.h"
 #include <stdbool.h>
-#define SIZE 5
-
-int cq[SIZE];
-int front=0;
-int rear=0;
-int cnt=0;
+#define PedalsMin 3.0
+#define SpeedMax 150.0
+#define SpeedMin 30.0
+#define SpeedInc 2.5
 
 /*
 DESCRIPTION: Saturate the throttle command to limit the acceleration.
@@ -60,7 +58,7 @@ float regulateThrottle(int isGoingOn, float cruiseSpeed, float vehicleSpeed)
 }
 
 
-
+//  check if the speed is in the speed limit
 int check_speed(float data){
 	if (data<30 || data>150 ){
 		return 0;
@@ -69,8 +67,9 @@ int check_speed(float data){
 	}
 }
 
+// check if the accel pedal and brake been press
 int check(float data){
-	if (data == 0 ){
+	if (data < PedalsMin ){
 		return 0;
 	}else{
 		return 1;
@@ -78,5 +77,21 @@ int check(float data){
 }
 
 
+float updateCruiseSpeed(int data, float speed){
+	if(data == 0){
+		return 0.0;
+	}
+    if(data == 1){
+        speed += SpeedInc;
+    }else if(data == 2){
+        speed -= SpeedInc;
+    }
+    if (speed > SpeedMax){
+        speed = SpeedMax;
+    }else if (speed < SpeedMin){
+        speed = SpeedMin;
+    }
+    return speed;
+}
 
 

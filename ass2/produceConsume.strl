@@ -2,13 +2,18 @@ module cruiseControl :
 function check_speed(float): integer;
 function check(float): integer;
 function regulateThrottle(integer, float, float): float;
+function updateCruiseSpeed(integer, float): float;
+
 
 input  On, Off, Resume, Set, QuickDecel, QuickAccel;
-input  Accel : float, Brake : float, Speed : float, cruiseSpeed:float; 
+input  Accel : float, Brake : float, Speed : float; 
 output ThrottleCmd : float;
 output CruiseState : integer;  
+output CruiseSpeed : float;
 
-signal On_state: integer in
+signal isCruiseSpeed, On_state: integer in
+signal currentCruiseSpeed : float in
+
 [
 loop
     emit CruiseState(1);
@@ -25,41 +30,98 @@ loop
                             	if speed =1 then                      
                                	emit CruiseState(2);                          
                             	else
-                                	emit CruiseState(3);
+                                	emit CruiseState(4);
                                end if;
                             pause;
                          
                     else
-                    	emit CruiseState(3);
+                    	emit CruiseState(4);
                     	pause;
                     end if;
             emit On_state(1);
             else
-            	emit CruiseState(4);
+            	emit CruiseState(3);
             	await Resume;
             end if;            
             end var
         end loop
     when Off;
-    emit CruiseState(1);
     emit On_state(0);
+    emit CruiseState(1);
     pause;
 end loop
 ]
 
 ||
 
+%Handle cruise speed change
 [
 loop
-    present On_state then
-        emit ThrottleCmd(regulateThrottle(?On_state, ?cruiseSpeed, ?Speed));
-	    pause;
-    else
-        pause;
+    abort
+        await On;
+            loop
+                emit currentCruiseSpeed(updateCruiseSpeed(3,?Speed));
+                emit CruiseSpeed(?currentCruiseSpeed);              
+                pause;
+                abort
+                    present not Set then
+                        loop
+                            present QuickAccel then
+                                emit currentCruiseSpeed(updateCruiseSpeed(1,pre(?currentCruiseSpeed)));
+                                emit CruiseSpeed(?currentCruiseSpeed);
+                                emit isCruiseSpeed;
+                            else
+                                present QuickDecel then
+                                    emit currentCruiseSpeed(updateCruiseSpeed(2,pre(?currentCruiseSpeed)));
+                                    emit CruiseSpeed(?currentCruiseSpeed);
+                                    emit isCruiseSpeed;
+                                end present;
+                            end present;
+                            emit isCruiseSpeed;
+                            pause;
+                        end loop
+                    end present;
+                when Set;
+            end loop
+    when Off;
+end loop
+
+]
+
+||
+
+[
+present On then
+    emit currentCruiseSpeed(updateCruiseSpeed(0,?Speed));
+    emit CruiseSpeed(?currentCruiseSpeed);
+    emit isCruiseSpeed;
+end present;
+loop
+    if ?On_state= 0 then
+        present not On and not Set then
+            emit currentCruiseSpeed(updateCruiseSpeed(0,?Speed));
+            emit CruiseSpeed(?currentCruiseSpeed);
+            emit isCruiseSpeed;
+        end present;
+    end if;
+    pause;
+end loop
+
+]
+
+||
+
+[
+loop
+    present isCruiseSpeed then
+        emit ThrottleCmd(regulateThrottle(?On_state, ?currentCruiseSpeed, ?Speed));
     end present;
-	
+	pause;
 end loop
 ] 
+
+
+end signal
 end signal
 end module
 

@@ -4,3 +4,4 @@ int check_speed(float data);
 int check(float data);
 float saturateThrottle(float throttleIn, int* saturate);
 float regulateThrottle(int isGoingOn, float cruiseSpeed, float vehicleSpeed);
+float updateCruiseSpeed(int data, float speed);
