@@ -11,13 +11,16 @@ output ThrottleCmd : float;
 output CruiseState : integer;  
 output CruiseSpeed : float;
 
-signal isCruiseSpeed, On_state: integer in
+signal State: integer, 
+c_peed: integer 
+in
 signal currentCruiseSpeed : float in
 
 [
 loop
     emit CruiseState(1);
-    emit On_state(0);
+    emit State(1);
+    emit c_peed(0);
     abort
         await On;
         loop
@@ -28,25 +31,30 @@ loop
             if brake =0 then 
                     if accel =0 then                                                  
                             	if speed =1 then                      
-                               	emit CruiseState(2);                          
+                               	emit CruiseState(2);    
+                                emit State(2);                      
                             	else
                                 	emit CruiseState(4);
+                                    emit State(4);
                                end if;
                             pause;
-                         
+                       
                     else
                     	emit CruiseState(4);
+                        emit State(4);
                     	pause;
                     end if;
-            emit On_state(1);
+                    emit c_peed(1); 
             else
             	emit CruiseState(3);
+                emit State(3);
             	await Resume;
             end if;            
             end var
         end loop
     when Off;
-    emit On_state(0);
+    emit State(1);
+    emit c_peed(0);
     emit CruiseState(1);
     pause;
 end loop
@@ -69,15 +77,12 @@ loop
                             present QuickAccel then
                                 emit currentCruiseSpeed(updateCruiseSpeed(1,pre(?currentCruiseSpeed)));
                                 emit CruiseSpeed(?currentCruiseSpeed);
-                                emit isCruiseSpeed;
                             else
                                 present QuickDecel then
                                     emit currentCruiseSpeed(updateCruiseSpeed(2,pre(?currentCruiseSpeed)));
                                     emit CruiseSpeed(?currentCruiseSpeed);
-                                    emit isCruiseSpeed;
                                 end present;
                             end present;
-                            emit isCruiseSpeed;
                             pause;
                         end loop
                     end present;
@@ -94,14 +99,12 @@ end loop
 present On then
     emit currentCruiseSpeed(updateCruiseSpeed(0,?Speed));
     emit CruiseSpeed(?currentCruiseSpeed);
-    emit isCruiseSpeed;
 end present;
 loop
-    if ?On_state= 0 then
+    if ? c_peed =0 then
         present not On and not Set then
             emit currentCruiseSpeed(updateCruiseSpeed(0,?Speed));
             emit CruiseSpeed(?currentCruiseSpeed);
-            emit isCruiseSpeed;
         end present;
     end if;
     pause;
@@ -113,12 +116,19 @@ end loop
 
 [
 loop
-    present isCruiseSpeed then
-        emit ThrottleCmd(regulateThrottle(?On_state, ?currentCruiseSpeed, ?Speed));
-    end present;
+    if ?State = 2 then
+        if not pre(?State) = 2 then
+            emit ThrottleCmd(regulateThrottle(1, ?currentCruiseSpeed, ?Speed));
+        else
+            emit ThrottleCmd(regulateThrottle(0, ?currentCruiseSpeed, ?Speed));
+        end if;
+    else
+        emit ThrottleCmd(?Accel);
+    end if;
 	pause;
 end loop
 ] 
+
 
 
 end signal
