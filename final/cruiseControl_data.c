@@ -59,7 +59,7 @@ float regulateThrottle(int isGoingOn, float cruiseSpeed, float vehicleSpeed)
 
 
 //  check if the speed is in the speed limit
-int check_speed(float data){
+int checkSpeed(float data){
 	if (data<30 || data>150 ){
 		return 0;
 	}else{
@@ -68,7 +68,7 @@ int check_speed(float data){
 }
 
 // check if the accel pedal and brake been press
-int check(float data){
+int checkPedalPress(float data){
 	if (data < PedalsMin ){
 		return 0;
 	}else{

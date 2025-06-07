@@ -46,9 +46,7 @@ loop
     when Off;
 end loop
 ]
-
 ||
-
 %Check brake and accel
 [
 loop
@@ -74,9 +72,7 @@ loop
     end var
 end loop
 ]
-
 ||
-
 %Handle cruise speed change
 [
 loop
